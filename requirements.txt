@@ -7,6 +7,7 @@ langchain-community
 tensorrt
 
 pipeline
+datasets
 playwright
 html2text
 sentence_transformers
@@ -16,5 +17,10 @@ peft==0.4.0
 bitsandbytes>=0.41.3
 trl==0.4.7
 nest_asyncio
-
-
+spacy
+newspaper
+nltk
+newspaper3k
+langchain_text_splitters
+unidecode
+lxml_html_clean
