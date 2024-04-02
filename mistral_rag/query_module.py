@@ -6,7 +6,9 @@ from conversation_memory_module import ConversationMemoryModule
 from langchain_core.runnables.passthrough import RunnablePassthrough
 from langchain.chains.llm import LLMChain
 from langchain_core.prompts import PromptTemplate
-from langchain_community.llms import HuggingFacePipeline
+#from langchain_community.llms import HuggingFacePipeline
+from langchain_community.llms.huggingface_pipeline import HuggingFacePipeline
+
 
 def process_query(query, index_module, llm, memory_module, llm_chain):
     conversation_history = memory_module.load_memory({"question": query})
