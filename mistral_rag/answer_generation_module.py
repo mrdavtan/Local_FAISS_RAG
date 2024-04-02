@@ -4,8 +4,8 @@ def generate_answer(search_results, standalone_question, conversation_history, l
     try:
         # Combine the search result documents into a single context string
         context = "\n\n".join([doc.page_content for doc in search_results])
-        print("Search Results Context:")
-        print(context)
+        #print("Search Results Context:")
+        #print(context)
 
         # Generate the search quality reflection
         search_quality_prompt = SEARCH_QUALITY_PROMPT.format(
@@ -14,8 +14,8 @@ def generate_answer(search_results, standalone_question, conversation_history, l
             search_results=context
         )
         search_quality_reflection = llm(search_quality_prompt).strip()
-        print("Search Quality Reflection:")
-        print(search_quality_reflection)
+        #print("Search Quality Reflection:")
+        #print(search_quality_reflection)
 
         if "not informative" in search_quality_reflection.lower():
             # If the search results are not informative, use the generic response prompt
@@ -32,13 +32,13 @@ def generate_answer(search_results, standalone_question, conversation_history, l
                 standalone_question=standalone_question
             )
 
-        print("Answer Prompt:")
-        print(answer_prompt)
+        #print("Answer Prompt:")
+        #print(answer_prompt)
 
         # Generate the answer using the LLM
         answer = llm(answer_prompt).strip()
-        print("Generated Answer:")
-        print(answer)
+        #print("Generated Answer:")
+        #print(answer)
 
         return answer
     except Exception as e:

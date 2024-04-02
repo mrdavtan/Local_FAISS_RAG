@@ -1,3 +1,4 @@
+
 import argparse
 import json
 import os
@@ -35,13 +36,20 @@ def load_chunked_data(json_file):
 
     return documents
 
-def main(json_file, index_path=None):
+def main(json_file, index_path):
     chunked_documents = load_chunked_data(json_file)
+
+    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ index_path: ", index_path)
 
     if not index_path:
         # Create an index directory using the name of the chunked_data file
         index_name = os.path.splitext(os.path.basename(json_file))[0]
         index_path = f"{index_name}_index"
+    else:
+        # Extract the index name from the provided index_path
+        index_name = os.path.basename(index_path.rstrip("/"))
+
+    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ index_path: ", index_path)
 
     os.makedirs(index_path, exist_ok=True)
 
@@ -58,13 +66,7 @@ def main(json_file, index_path=None):
         vectorstore = indexing_module.index_documents(chunked_documents)
         indexing_module.save_index(index_path)
 
-    # Perform a search
-    query = "What is the main topic of the articles?"
-    search_results = indexing_module.search(query)
-
-    print("Search Results:")
-    for result in search_results:
-        print(result.page_content)
+    return vectorstore
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Indexing Module")
@@ -74,6 +76,7 @@ if __name__ == "__main__":
 
     json_file = args.chunked_data_file
     index_path = args.index_path
+    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  index_path: ", index_path)
 
     main(json_file, index_path)
 

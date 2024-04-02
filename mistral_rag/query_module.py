@@ -1,19 +1,17 @@
 import sys
 import os
 from llm_module import LLMModule
-from index_module import IndexModule
+from index_module import main as load_index
 from conversation_memory_module import ConversationMemoryModule
 from standalone_question_module import generate_standalone_question
 from answer_generation_module import generate_answer
-from langchain_community.llms.huggingface_pipeline import HuggingFacePipeline
 
-
-def process_query(query, index_module, llm, memory_module):
+def process_query(query, index_module, llm_pipeline, memory_module):
     conversation_history = memory_module.get_conversation_history()
     print("Conversation History:")
     print(conversation_history)
 
-    standalone_question = generate_standalone_question(query, conversation_history, llm)
+    standalone_question = generate_standalone_question(query, conversation_history, llm_pipeline)
     print("Standalone Question:")
     print(standalone_question)
 
@@ -21,21 +19,20 @@ def process_query(query, index_module, llm, memory_module):
     print("Search Results:")
     print(search_results)
 
-    answer = generate_answer(search_results, standalone_question, conversation_history, llm)
+    answer = generate_answer(search_results, standalone_question, conversation_history, llm_pipeline)
     print("Generated Answer:")
     print(answer)
 
     memory_module.save_memory({"question": query}, {"answer": answer})
     return answer
 
-
 def chatbot(index_path):
-    index_module = IndexModule()
-    vectorstore = index_module.load_index(index_path)
+    json_file = "./football.json"  # Replace with the actual path to your JSON file
+    vectorstore = load_index(json_file, index_path)
     llm = LLMModule(model_name='mistralai/Mistral-7B-Instruct-v0.1')
     llm.load_model()
     llm.load_pipelines()
-    llm_pipeline = HuggingFacePipeline(pipeline=llm.pipelines["response"])
+    llm_pipeline = llm.pipelines["response"]
     memory_module = ConversationMemoryModule()
 
     print("Welcome to the Chatbot!")
@@ -47,21 +44,20 @@ def chatbot(index_path):
             print("Thank you for using the Chatbot. Goodbye!")
             break
 
-        answer = process_query(user_input, index_module, llm_pipeline, memory_module)
+        answer = process_query(user_input, vectorstore, llm_pipeline, memory_module)
         print(f"Chatbot: {answer}")
 
-
 def main(query, index_path):
-    index_module = IndexModule()
-    vectorstore = index_module.load_index(index_path)
+    json_file = "./football.json"  # Replace with the actual path to your JSON file
+    vectorstore = load_index(json_file, index_path)
     llm = LLMModule(model_name='mistralai/Mistral-7B-Instruct-v0.1')
     llm.load_model()
     llm.load_pipelines()
-    llm_pipeline = HuggingFacePipeline(pipeline=llm.pipelines["response"])
+    llm_pipeline = llm.pipelines["response"]
     memory_module = ConversationMemoryModule()
 
-    process_query(query, index_module, llm_pipeline, memory_module)
-
+    answer = process_query(query, vectorstore, llm_pipeline, memory_module)
+    print(f"Chatbot: {answer}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -79,3 +75,6 @@ if __name__ == "__main__":
         main(query, index_path)
     else:
         chatbot(index_path)
+
+
+
