@@ -32,10 +32,23 @@ class ConversationMemoryModule:
     def generate_standalone_question(self, query, conversation_history, llm):
         print("################# Generating Standalone Question ################")
         # Format the prompt with the current query and conversation history
+        formatted_history = "\n".join([f"{msg.type}: {msg.content}" for msg in conversation_history])
         prompt = self.standalone_question_prompt.format(
-            question=query, chat_history="\n".join(conversation_history)
+            question=query, chat_history=formatted_history
         )
         # Assuming llm is an instance of HuggingFacePipeline or a similar wrapper
         # and can be invoked directly to generate a response
         standalone_question = llm(prompt).strip()  # Directly invoke llm with the prompt
         return standalone_question
+
+
+#    def generate_standalone_question(self, query, conversation_history, llm):
+#        print("################# Generating Standalone Question ################")
+#        # Format the prompt with the current query and conversation history
+#        prompt = self.standalone_question_prompt.format(
+#            question=query, chat_history="\n".join(conversation_history)
+#        )
+#        # Assuming llm is an instance of HuggingFacePipeline or a similar wrapper
+#        # and can be invoked directly to generate a response
+#        standalone_question = llm(prompt).strip()  # Directly invoke llm with the prompt
+#        return standalone_question

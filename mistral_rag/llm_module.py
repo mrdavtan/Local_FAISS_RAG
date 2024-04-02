@@ -70,7 +70,7 @@ class LLMModule:
         try:
             pipeline = self.pipelines.get(task)
             if pipeline:
-                print("Prompt:")
+                print("######################### Prompt:")
                 print(prompt)
                 response = pipeline(prompt)[0]["generated_text"]
                 print("Response:")

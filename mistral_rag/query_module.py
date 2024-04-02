@@ -24,6 +24,7 @@ def process_query(query, index_module, llm, memory_module, llm_chain):
         | llm_chain
     )
 
+    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$44 LLM CHAIN: ", llm_chain)
     # Invoke the RAG chain with the standalone question
     result = rag_chain.invoke(standalone_question)
 
