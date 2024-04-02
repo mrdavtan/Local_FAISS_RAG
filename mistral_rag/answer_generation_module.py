@@ -46,4 +46,3 @@ def generate_answer(search_results, standalone_question, llm):
     except Exception as e:
         print("Error generating answer:", e)
         raise e
-
