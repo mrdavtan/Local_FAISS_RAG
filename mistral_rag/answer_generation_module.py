@@ -18,13 +18,23 @@ def _combine_documents(docs, document_prompt=DEFAULT_DOCUMENT_PROMPT, document_s
     return document_separator.join(doc_strings)
 
 def generate_answer(search_results, standalone_question, llm):
-    context = ' '.join([doc.page_content for doc in search_results])
-    print("Search Results Context:")
-    print(context)
-    prompt = ANSWER_PROMPT.format(context=context, standalone_question=standalone_question)
-    print("Answer Prompt:")
-    print(prompt)
-    answer = llm.generate_text(prompt, task="response")
-    print("Generated Answer:")
-    print(answer)
-    return answer.strip()
+    try:
+        context = ' '.join([doc.page_content for doc in search_results])
+        print("Search Results Context:")
+        print(context)
+        prompt = ANSWER_PROMPT.format(context=context, standalone_question=standalone_question)
+        print("Answer Prompt:")
+        print(prompt)
+        answer = llm.generate_text(prompt, task="response")
+        print("Generated Answer:")
+        print(answer)
+        # Extract the generated answer from the response
+        extracted_answer = answer.split("[/INST]")[-1].strip()
+        print("Extracted Answer:")
+        print(extracted_answer)
+        return extracted_answer
+    except Exception as e:
+        print("Error:")
+        print(str(e))
+        raise e
+

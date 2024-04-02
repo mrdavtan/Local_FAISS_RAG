@@ -67,12 +67,23 @@ class LLMModule:
         )
 
     def generate_text(self, prompt, task="response"):
-        # Generate text using the specified task pipeline
-        pipeline = self.pipelines.get(task)
-        if pipeline:
-            return pipeline(prompt)[0]["generated_text"]
-        else:
-            raise ValueError(f"Invalid task: {task}")
+        try:
+            pipeline = self.pipelines.get(task)
+            if pipeline:
+                print("Prompt:")
+                print(prompt)
+                response = pipeline(prompt)[0]["generated_text"]
+                print("Response:")
+                print(response)
+                return response
+            else:
+                raise ValueError(f"Invalid task: {task}")
+        except Exception as e:
+            print("Error:")
+            print(str(e))
+            raise e
+
+
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
