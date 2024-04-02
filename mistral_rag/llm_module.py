@@ -15,7 +15,7 @@ class LLMModule:
         self.model_name = model_name
         self.tokenizer = None
         self.model = None
-        self.pipeline = None
+        self.pipelines = {}
 
     def load_model(self):
         model_config = transformers.AutoConfig.from_pretrained(self.model_name)
@@ -43,21 +43,36 @@ class LLMModule:
             quantization_config=bnb_config,
         )
 
-    def load_pipeline(self):
-        self.pipeline = pipeline(
+    def load_pipelines(self):
+        # Initialize the standalone query generation pipeline
+        self.pipelines["standalone_query"] = pipeline(
+            "text-generation",
             model=self.model,
             tokenizer=self.tokenizer,
-            task="text-generation",
-            do_sample=True,
+            temperature=0.0,
+            repetition_penalty=1.1,
+            return_full_text=True,
+            max_new_tokens=1000,
+        )
+
+        # Initialize the response generation pipeline
+        self.pipelines["response"] = pipeline(
+            "text-generation",
+            model=self.model,
+            tokenizer=self.tokenizer,
             temperature=0.2,
             repetition_penalty=1.1,
             return_full_text=True,
             max_new_tokens=1000,
         )
 
-    def generate_text(self, prompt):
-        response = self.pipeline(prompt)
-        return response[0]['generated_text']
+    def generate_text(self, prompt, task="response"):
+        # Generate text using the specified task pipeline
+        pipeline = self.pipelines.get(task)
+        if pipeline:
+            return pipeline(prompt)[0]["generated_text"]
+        else:
+            raise ValueError(f"Invalid task: {task}")
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -68,7 +83,7 @@ if __name__ == '__main__':
 
     llm = LLMModule(model_name='mistralai/Mistral-7B-Instruct-v0.1')
     llm.load_model()
-    llm.load_pipeline()
+    llm.load_pipelines()
 
     response = llm.generate_text(query)
     print(response)

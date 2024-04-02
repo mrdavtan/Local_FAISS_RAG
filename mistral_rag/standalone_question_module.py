@@ -1,5 +1,8 @@
 from langchain_core.prompts import PromptTemplate
 
+
+print("################################ Standalone Question Module #####################################3")
+
 _template = """
 [INST]
 Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language, that can be used to query a FAISS index. This query will be used to retrieve documents with additional context.
@@ -43,5 +46,9 @@ CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(_template)
 
 def generate_standalone_question(question, conversation_history, llm):
     prompt = CONDENSE_QUESTION_PROMPT.format(question=question, chat_history=conversation_history)
-    standalone_question = llm.generate_text(prompt).strip()
+    print("Standalone Question Prompt:")
+    print(prompt)
+    standalone_question = llm.generate_text(prompt, task="standalone_query").strip()
+    print("Generated Standalone Question:")
+    print(standalone_question)
     return standalone_question

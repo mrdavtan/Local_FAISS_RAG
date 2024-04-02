@@ -1,4 +1,3 @@
-# indexing_module.py
 import argparse
 import json
 import os
@@ -31,7 +30,7 @@ def load_chunked_data(json_file):
 
     documents = []
     for chunk in chunked_data:
-        document = Document(page_content=chunk['page_content'], metadata=chunk['metadata'])
+        document = Document(page_content=chunk['chunk'], metadata=chunk['metadata'])
         documents.append(document)
 
     return documents

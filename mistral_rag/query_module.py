@@ -6,18 +6,27 @@ from conversation_memory_module import ConversationMemoryModule
 from standalone_question_module import generate_standalone_question
 from answer_generation_module import generate_answer
 
+
 def main(query, index_path):
     index_module = IndexModule()
     vectorstore = index_module.load_index(index_path)
     llm = LLMModule(model_name='mistralai/Mistral-7B-Instruct-v0.1')
     llm.load_model()
-    llm.load_pipeline()
+    llm.load_pipelines()
     memory_module = ConversationMemoryModule()
 
     conversation_history = memory_module.load_memory({"question": query})
+    print("Conversation History:")
+    print(conversation_history)
     standalone_question = memory_module.generate_standalone_question(query, conversation_history, llm)
+    print("Standalone Question:")
+    print(standalone_question)
     search_results = index_module.search(standalone_question)
+    print("Search Results:")
+    for result in search_results:
+        print(result.page_content)
     answer = generate_answer(search_results, standalone_question, llm)
+    print("Generated Answer:")
     print(answer)
     memory_module.save_memory({"question": query}, {"answer": answer})
 

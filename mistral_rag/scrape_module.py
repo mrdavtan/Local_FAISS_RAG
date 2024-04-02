@@ -1,113 +1,105 @@
-# scraping_module.py
+import os
 import sys
 import json
+import uuid
+import requests
+from datetime import datetime
 from newspaper import Article
-from langchain.docstore.document import Document
-#from langchain.text_splitter import SpacyTextSplitter
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 import re
-from unidecode import unidecode
+import time
 
-class ScraperModule:
-    def __init__(self, urls):
-        self.urls = urls
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=200,
-            chunk_overlap=0,
-            length_function=len,
-        )
+class Scraper:
+    def __init__(self, input_file):
+        self.input_file = input_file
+        self.articles_dir = './articles'
+        self.url_to_uuid = {}
 
-    def scrape_articles(self):
-        print("Scraping articles...")
-        documents = []
-        for url in self.urls:
-            print(f"Scraping URL: {url}")
-            article = Article(url)
-            article.download()
-            article.parse()
-            article.nlp()
-            cleaned_text = self.clean_article(article.text)
-            document = Document(page_content=cleaned_text, metadata={"source": url})
-            documents.append(document)
-        print(f"Scraped {len(documents)} documents")
-        return documents
+    def generate_uuid_for_article(self, article_url):
+        if article_url not in self.url_to_uuid:
+            self.url_to_uuid[article_url] = uuid.uuid4().hex
+        return self.url_to_uuid[article_url]
 
-    def clean_article(self, text):
-        cleaned_text = text.lower()  # Convert to lowercase
-        cleaned_text = re.sub(r'\s+', ' ', cleaned_text)  # Remove extra whitespace
-        cleaned_text = unidecode(cleaned_text)  # Unidecode characters
-        return cleaned_text
+    def extract_urls(self, data):
+        urls = []
+        if isinstance(data, dict):
+            for value in data.values():
+                urls.extend(self.extract_urls(value))
+        elif isinstance(data, list):
+            for item in data:
+                urls.extend(self.extract_urls(item))
+        elif isinstance(data, str) and data.startswith("http"):
+            urls.append(data)
+        return urls
 
-    def chunk_text(self, documents):
-        print("Chunking text...")
-        chunked_documents = self.text_splitter.split_documents(documents)
-        processed_chunks = self.post_process_chunks(chunked_documents)
-        print(f"Chunked text into {len(processed_chunks)} chunks")
-        return processed_chunks
+    def scrape(self):
+        os.makedirs(self.articles_dir, exist_ok=True)
+        articles_list = []
+        try:
+            with open(self.input_file, 'r') as file:
+                data = json.load(file)
 
-    def post_process_chunks(self, chunks):
-        processed_chunks = []
-        for chunk in chunks:
-            if len(chunk.page_content) <= 200:
-                processed_chunks.append(chunk)
-            else:
-                sentences = re.split(r'(?<=[.!?])\s+', chunk.page_content)
-                current_chunk = ''
-                for sentence in sentences:
-                    if len(current_chunk) + len(sentence) <= 200:
-                        current_chunk += ' ' + sentence
+            urls = self.extract_urls(data)
+            print(f"Extracted {len(urls)} URLs")
+
+            for url in urls:
+                try:
+                    headers = {'User-Agent': 'Mozilla/5.0'}
+                    response = requests.get(url, headers=headers, timeout=(5, 10))
+                    if response.status_code == 200:
+                        article = Article(url)
+                        article.set_html(response.text)
+                        article.parse()
+                        article.nlp()
+                        article_details = {
+                            'url': url,
+                            'date': datetime.now().strftime('%Y-%m-%d'),
+                            'time': datetime.now().strftime('%H:%M:%S %Z'),
+                            'title': article.title,
+                            'body': article.text,
+                            'summary': article.summary,
+                            'keywords': article.keywords,
+                            'image_url': article.top_image
+                        }
+                        articles_list.append(article_details)
+                        self.save_article_as_json(article_details, self.articles_dir)
+                        print(f"Saved article: {article.title}")
                     else:
-                        processed_chunks.append(Document(page_content=current_chunk.strip(), metadata=chunk.metadata))
-                        current_chunk = sentence
-                if current_chunk:
-                    processed_chunks.append(Document(page_content=current_chunk.strip(), metadata=chunk.metadata))
-        return processed_chunks
+                        print(f"Request failed with status code: {response.status_code}")
+                except requests.exceptions.Timeout:
+                    print(f"Timeout occurred for URL: {url}")
+                except requests.exceptions.RequestException as e:
+                    print(f"Request exception for URL {url}: {e}")
+                except Exception as e:
+                    print(e)
+                    print('continuing...')
+                time.sleep(1)
+            return articles_list
+        except Exception as e:
+            raise Exception(f'Error in "Scraper.scrape()": {e}')
 
+    def save_article_as_json(self, article, directory):
+        article_id = self.generate_uuid_for_article(article['url'])
+        article_with_id = {'id': article_id}
+        article_with_id.update(article)
 
-    def scrape_and_chunk(self):
-        scraped_documents = self.scrape_articles()
-        chunked_documents = self.chunk_text(scraped_documents)
-        return chunked_documents
+        sanitized_title = re.sub(r'[\\/*?:"<>|]', '_', article['title'])
+        sanitized_title = re.sub(r'\s+', '_', sanitized_title)[:50]
 
+        formatted_date = article['date'].replace('-', '') + '_' + article['time'].split(':')[0] + article['time'].split(':')[1]
 
-def extract_urls(data):
-    urls = []
-    if isinstance(data, dict):
-        for value in data.values():
-            urls.extend(extract_urls(value))
-    elif isinstance(data, list):
-        for item in data:
-            urls.extend(extract_urls(item))
-    elif isinstance(data, str) and data.startswith("http"):
-        urls.append(data)
-    return urls
+        filename = f"{sanitized_title}_{formatted_date}.json"
+        filepath = os.path.join(directory, filename)
 
-def main(input_file, output_file):
-    print(f"Reading URLs from: {input_file}")
-    with open(input_file, 'r') as file:
-        data = json.load(file)
+        with open(filepath, 'w', encoding='utf-8') as file:
+            json.dump(article_with_id, file, ensure_ascii=False, indent=4)
 
-    urls = extract_urls(data)
-    print(f"Extracted {len(urls)} URLs")
-
-    scraper = ScraperModule(urls)
-    chunked_documents = scraper.scrape_and_chunk()
-
-    print("Converting chunked documents to JSON format...")
-    chunked_data = [{"page_content": doc.page_content, "metadata": doc.metadata} for doc in chunked_documents]
-
-    print(f"Saving chunked data to: {output_file}")
-    with open(output_file, 'w') as file:
-        json.dump(chunked_data, file, indent=4)
-
-    print(f"Chunked data saved to {output_file}")
+        print(f"Article saved: {filepath}")
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print("Usage: python scraping_module.py <input_file.json> <output_file.json>")
+    if len(sys.argv) != 2:
+        print("Usage: python scraper.py <input_file.json>")
         sys.exit(1)
 
     input_file = sys.argv[1]
-    output_file = sys.argv[2]
-
-    main(input_file, output_file)
+    scraper = Scraper(input_file)
+    articles = scraper.scrape()
