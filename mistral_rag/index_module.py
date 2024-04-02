@@ -6,7 +6,7 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.docstore.document import Document
 
-class IndexingModule:
+class IndexModule:
     def __init__(self, model_name="sentence-transformers/all-mpnet-base-v2"):
         self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
         self.vectorstore = None
@@ -46,7 +46,7 @@ def main(json_file, index_path=None):
 
     os.makedirs(index_path, exist_ok=True)
 
-    indexing_module = IndexingModule()
+    indexing_module = IndexModule()
 
     index_faiss_path = os.path.join(index_path, f"{index_name}.faiss")
     index_pkl_path = os.path.join(index_path, f"{index_name}.pkl")

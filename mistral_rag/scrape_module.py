@@ -3,14 +3,19 @@ import sys
 import json
 from newspaper import Article
 from langchain.docstore.document import Document
-from langchain.text_splitter import SpacyTextSplitter
+#from langchain.text_splitter import SpacyTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 import re
 from unidecode import unidecode
 
 class ScraperModule:
     def __init__(self, urls):
         self.urls = urls
-        self.text_splitter = SpacyTextSplitter(chunk_size=200, chunk_overlap=0)
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=200,
+            chunk_overlap=0,
+            length_function=len,
+        )
 
     def scrape_articles(self):
         print("Scraping articles...")
@@ -36,13 +41,34 @@ class ScraperModule:
     def chunk_text(self, documents):
         print("Chunking text...")
         chunked_documents = self.text_splitter.split_documents(documents)
-        print(f"Chunked text into {len(chunked_documents)} chunks")
-        return chunked_documents
+        processed_chunks = self.post_process_chunks(chunked_documents)
+        print(f"Chunked text into {len(processed_chunks)} chunks")
+        return processed_chunks
+
+    def post_process_chunks(self, chunks):
+        processed_chunks = []
+        for chunk in chunks:
+            if len(chunk.page_content) <= 200:
+                processed_chunks.append(chunk)
+            else:
+                sentences = re.split(r'(?<=[.!?])\s+', chunk.page_content)
+                current_chunk = ''
+                for sentence in sentences:
+                    if len(current_chunk) + len(sentence) <= 200:
+                        current_chunk += ' ' + sentence
+                    else:
+                        processed_chunks.append(Document(page_content=current_chunk.strip(), metadata=chunk.metadata))
+                        current_chunk = sentence
+                if current_chunk:
+                    processed_chunks.append(Document(page_content=current_chunk.strip(), metadata=chunk.metadata))
+        return processed_chunks
+
 
     def scrape_and_chunk(self):
         scraped_documents = self.scrape_articles()
         chunked_documents = self.chunk_text(scraped_documents)
         return chunked_documents
+
 
 def extract_urls(data):
     urls = []
