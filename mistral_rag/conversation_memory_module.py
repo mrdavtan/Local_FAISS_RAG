@@ -24,14 +24,13 @@ class ConversationMemoryModule:
 
     def load_memory(self, inputs):
         print("##################### Loading Memory #############################")
-
         return self.memory.load_memory_variables(inputs)["history"]
 
     def save_memory(self, inputs, outputs):
         self.memory.save_context(inputs, outputs)
 
     def generate_standalone_question(self, query, conversation_history, llm):
-        print("################# Generating Standalone Question  ################")
+        print("################# Generating Standalone Question ################")
         prompt = self.standalone_question_prompt.format(
             question=query, chat_history=conversation_history
         )

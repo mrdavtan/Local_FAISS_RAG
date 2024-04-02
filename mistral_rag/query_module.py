@@ -8,11 +8,11 @@ from langchain.chains.llm import LLMChain
 from langchain_core.prompts import PromptTemplate
 from langchain_community.llms import HuggingFacePipeline
 
-def process_query(query, index_module, llm_pipeline, memory_module, llm_chain):
+def process_query(query, index_module, llm, memory_module, llm_chain):
     conversation_history = memory_module.load_memory({"question": query})
     print("Conversation History:")
     print(conversation_history)
-    standalone_question = memory_module.generate_standalone_question(query, conversation_history, llm_pipeline)
+    standalone_question = memory_module.generate_standalone_question(query, conversation_history, llm)
     print("Standalone Question:")
     print(standalone_question)
 
