@@ -3,36 +3,31 @@ import os
 from llm_module import LLMModule
 from index_module import IndexModule
 from conversation_memory_module import ConversationMemoryModule
-from langchain_core.runnables.passthrough import RunnablePassthrough
-from langchain.chains.llm import LLMChain
-from langchain_core.prompts import PromptTemplate
-#from langchain_community.llms import HuggingFacePipeline
+from standalone_question_module import generate_standalone_question
+from answer_generation_module import generate_answer
 from langchain_community.llms.huggingface_pipeline import HuggingFacePipeline
 
 
-def process_query(query, index_module, llm, memory_module, llm_chain):
-    conversation_history = memory_module.load_memory({"question": query})
+def process_query(query, index_module, llm, memory_module):
+    conversation_history = memory_module.get_conversation_history()
     print("Conversation History:")
     print(conversation_history)
-    standalone_question = memory_module.generate_standalone_question(query, conversation_history, llm)
+
+    standalone_question = generate_standalone_question(query, conversation_history, llm)
     print("Standalone Question:")
     print(standalone_question)
 
-    # Create the RAG chain
-    rag_chain = (
-        {"context": index_module.search, "question": RunnablePassthrough()}
-        | llm_chain
-    )
+    search_results = index_module.search(standalone_question)
+    print("Search Results:")
+    print(search_results)
 
-    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$44 LLM CHAIN: ", llm_chain)
-    # Invoke the RAG chain with the standalone question
-    result = rag_chain.invoke(standalone_question)
-
-    answer = result['text']
+    answer = generate_answer(search_results, standalone_question, conversation_history, llm)
     print("Generated Answer:")
     print(answer)
+
     memory_module.save_memory({"question": query}, {"answer": answer})
     return answer
+
 
 def chatbot(index_path):
     index_module = IndexModule()
@@ -43,23 +38,6 @@ def chatbot(index_path):
     llm_pipeline = HuggingFacePipeline(pipeline=llm.pipelines["response"])
     memory_module = ConversationMemoryModule()
 
-    # Create prompt template
-    prompt_template = """
-    ### [INST] Instruction: Answer the question based on your fantasy football knowledge. Here is context to help:
-
-    {context}
-
-    ### QUESTION:
-    {question} [/INST]
-    """
-    prompt = PromptTemplate(
-        input_variables=["context", "question"],
-        template=prompt_template,
-    )
-
-    # Create LLM chain
-    llm_chain = LLMChain(llm=llm_pipeline, prompt=prompt)
-
     print("Welcome to the Chatbot!")
     print("Type 'quit' to exit the chatbot.")
 
@@ -69,8 +47,9 @@ def chatbot(index_path):
             print("Thank you for using the Chatbot. Goodbye!")
             break
 
-        answer = process_query(user_input, index_module, llm_pipeline, memory_module, llm_chain)
+        answer = process_query(user_input, index_module, llm_pipeline, memory_module)
         print(f"Chatbot: {answer}")
+
 
 def main(query, index_path):
     index_module = IndexModule()
@@ -81,24 +60,8 @@ def main(query, index_path):
     llm_pipeline = HuggingFacePipeline(pipeline=llm.pipelines["response"])
     memory_module = ConversationMemoryModule()
 
-    # Create prompt template
-    prompt_template = """
-    ### [INST] Instruction: Answer the question based on your fantasy football knowledge. Here is context to help:
+    process_query(query, index_module, llm_pipeline, memory_module)
 
-    {context}
-
-    ### QUESTION:
-    {question} [/INST]
-    """
-    prompt = PromptTemplate(
-        input_variables=["context", "question"],
-        template=prompt_template,
-    )
-
-    # Create LLM chain
-    llm_chain = LLMChain(llm=llm_pipeline, prompt=prompt)
-
-    process_query(query, index_module, llm_pipeline, memory_module, llm_chain)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

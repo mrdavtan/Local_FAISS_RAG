@@ -76,3 +76,4 @@ if __name__ == "__main__":
     index_path = args.index_path
 
     main(json_file, index_path)
+
