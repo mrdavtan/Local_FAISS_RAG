@@ -1,75 +1,87 @@
-# indexing_module.py
-import argparse
+# scraping_module.py
+import sys
 import json
-import os
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
+from newspaper import Article
 from langchain.docstore.document import Document
+from langchain.text_splitter import SpacyTextSplitter
+import re
+from unidecode import unidecode
 
-class IndexingModule:
-    def __init__(self, model_name="sentence-transformers/all-mpnet-base-v2"):
-        self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
-        self.vectorstore = None
+class ScraperModule:
+    def __init__(self, urls):
+        self.urls = urls
+        self.text_splitter = SpacyTextSplitter(chunk_size=200, chunk_overlap=0)
 
-    def index_documents(self, documents):
-        self.vectorstore = FAISS.from_documents(documents, self.embeddings)
-        return self.vectorstore
+    def scrape_articles(self):
+        print("Scraping articles...")
+        documents = []
+        for url in self.urls:
+            print(f"Scraping URL: {url}")
+            article = Article(url)
+            article.download()
+            article.parse()
+            article.nlp()
+            cleaned_text = self.clean_article(article.text)
+            document = Document(page_content=cleaned_text, metadata={"source": url})
+            documents.append(document)
+        print(f"Scraped {len(documents)} documents")
+        return documents
 
-    def load_index(self, index_path):
-        self.vectorstore = FAISS.load_local(index_path, self.embeddings, allow_dangerous_deserialization=True)
-        return self.vectorstore
+    def clean_article(self, text):
+        cleaned_text = text.lower()  # Convert to lowercase
+        cleaned_text = re.sub(r'\s+', ' ', cleaned_text)  # Remove extra whitespace
+        cleaned_text = unidecode(cleaned_text)  # Unidecode characters
+        return cleaned_text
 
-    def save_index(self, index_path):
-        self.vectorstore.save_local(index_path)
+    def chunk_text(self, documents):
+        print("Chunking text...")
+        chunked_documents = self.text_splitter.split_documents(documents)
+        print(f"Chunked text into {len(chunked_documents)} chunks")
+        return chunked_documents
 
-    def search(self, query, k=4):
-        return self.vectorstore.similarity_search(query, k=k)
+    def scrape_and_chunk(self):
+        scraped_documents = self.scrape_articles()
+        chunked_documents = self.chunk_text(scraped_documents)
+        return chunked_documents
 
-def load_chunked_data(json_file):
-    with open(json_file, 'r') as file:
-        chunked_data = json.load(file)
+def extract_urls(data):
+    urls = []
+    if isinstance(data, dict):
+        for value in data.values():
+            urls.extend(extract_urls(value))
+    elif isinstance(data, list):
+        for item in data:
+            urls.extend(extract_urls(item))
+    elif isinstance(data, str) and data.startswith("http"):
+        urls.append(data)
+    return urls
 
-    documents = []
-    for chunk in chunked_data:
-        document = Document(page_content=chunk['page_content'], metadata=chunk['metadata'])
-        documents.append(document)
+def main(input_file, output_file):
+    print(f"Reading URLs from: {input_file}")
+    with open(input_file, 'r') as file:
+        data = json.load(file)
 
-    return documents
+    urls = extract_urls(data)
+    print(f"Extracted {len(urls)} URLs")
 
-def main(json_file, index_path=None):
-    chunked_documents = load_chunked_data(json_file)
+    scraper = ScraperModule(urls)
+    chunked_documents = scraper.scrape_and_chunk()
 
-    if not index_path:
-        # Create an index_data directory using the name of the chunked_data file
-        index_path = os.path.splitext(json_file)[0] + '_index_data'
+    print("Converting chunked documents to JSON format...")
+    chunked_data = [{"page_content": doc.page_content, "metadata": doc.metadata} for doc in chunked_documents]
 
-    os.makedirs(index_path, exist_ok=True)
+    print(f"Saving chunked data to: {output_file}")
+    with open(output_file, 'w') as file:
+        json.dump(chunked_data, file, indent=4)
 
-    indexing_module = IndexingModule()
+    print(f"Chunked data saved to {output_file}")
 
-    if os.path.exists(os.path.join(index_path, 'index.pkl')):
-        # Load the index from disk if index.pkl exists in the index_path
-        vectorstore = indexing_module.load_index(index_path)
-    else:
-        # Index the documents if index.pkl doesn't exist in the index_path
-        vectorstore = indexing_module.index_documents(chunked_documents)
-        indexing_module.save_index(index_path)
+if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        print("Usage: python scraping_module.py <input_file.json> <output_file.json>")
+        sys.exit(1)
 
-    # Perform a search
-    query = "What is the main topic of the articles?"
-    search_results = indexing_module.search(query)
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
 
-    print("Search Results:")
-    for result in search_results:
-        print(result.page_content)
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Indexing Module")
-    parser.add_argument("chunked_data_file", type=str, help="Path to the JSON file containing chunked data")
-    parser.add_argument("--index-path", type=str, help="Path to the directory to store the index files (optional)")
-    args = parser.parse_args()
-
-    json_file = args.chunked_data_file
-    index_path = args.index_path
-
-    main(json_file, index_path)
+    main(input_file, output_file)

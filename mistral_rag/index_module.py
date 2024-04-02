@@ -1,6 +1,7 @@
 # indexing_module.py
 import argparse
 import json
+import os
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.docstore.document import Document
@@ -15,7 +16,7 @@ class IndexingModule:
         return self.vectorstore
 
     def load_index(self, index_path):
-        self.vectorstore = FAISS.load_local(index_path, self.embeddings)
+        self.vectorstore = FAISS.load_local(index_path, self.embeddings, allow_dangerous_deserialization=True)
         return self.vectorstore
 
     def save_index(self, index_path):
@@ -35,18 +36,27 @@ def load_chunked_data(json_file):
 
     return documents
 
-def main(json_file, index_path):
+def main(json_file, index_path=None):
     chunked_documents = load_chunked_data(json_file)
+
+    if not index_path:
+        # Create an index directory using the name of the chunked_data file
+        index_name = os.path.splitext(os.path.basename(json_file))[0]
+        index_path = f"{index_name}_index"
+
+    os.makedirs(index_path, exist_ok=True)
 
     indexing_module = IndexingModule()
 
-    if index_path:
-        # Load the index from disk if index_path is provided
+    index_faiss_path = os.path.join(index_path, f"{index_name}.faiss")
+    index_pkl_path = os.path.join(index_path, f"{index_name}.pkl")
+
+    if os.path.exists(index_faiss_path) and os.path.exists(index_pkl_path):
+        # Load the index from disk if both index files exist
         vectorstore = indexing_module.load_index(index_path)
     else:
-        # Index the documents if index_path is not provided
+        # Index the documents if either index file doesn't exist
         vectorstore = indexing_module.index_documents(chunked_documents)
-        index_path = "index_data"
         indexing_module.save_index(index_path)
 
     # Perform a search
@@ -59,14 +69,11 @@ def main(json_file, index_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Indexing Module")
-    parser.add_argument("--json-file", type=str, help="Path to the JSON file containing chunked data")
-    parser.add_argument("--index-path", type=str, help="Path to the directory to store the index files")
+    parser.add_argument("chunked_data_file", type=str, help="Path to the JSON file containing chunked data")
+    parser.add_argument("--index-path", type=str, help="Path to the directory to store the index files (optional)")
     args = parser.parse_args()
 
-    json_file = args.json_file
+    json_file = args.chunked_data_file
     index_path = args.index_path
-
-    if not json_file:
-        json_file = input("Please provide the path to the JSON file containing chunked data: ")
 
     main(json_file, index_path)
