@@ -70,11 +70,11 @@ class LLMModule:
         try:
             pipeline = self.pipelines.get(task)
             if pipeline:
-                print("######################### Prompt:")
-                print(prompt)
+                #print("######################### Prompt:")
+                #print(prompt)
                 response = pipeline(prompt)[0]["generated_text"]
-                print("Response:")
-                print(response)
+                #print("Response:")
+                #print(response)
                 return response
             else:
                 raise ValueError(f"Invalid task: {task}")

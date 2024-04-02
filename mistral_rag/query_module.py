@@ -1,4 +1,3 @@
-import sys
 import os
 from llm_module import LLMModule
 from index_module import main as load_index
@@ -27,8 +26,7 @@ def process_query(query, index_module, llm_pipeline, memory_module):
     return answer
 
 def chatbot(index_path):
-    json_file = "./football.json"  # Replace with the actual path to your JSON file
-    vectorstore = load_index(json_file, index_path)
+    index_module = load_index(index_path)
     llm = LLMModule(model_name='mistralai/Mistral-7B-Instruct-v0.1')
     llm.load_model()
     llm.load_pipelines()
@@ -44,22 +42,22 @@ def chatbot(index_path):
             print("Thank you for using the Chatbot. Goodbye!")
             break
 
-        answer = process_query(user_input, vectorstore, llm_pipeline, memory_module)
+        answer = process_query(user_input, index_module, llm_pipeline, memory_module)
         print(f"Chatbot: {answer}")
 
 def main(query, index_path):
-    json_file = "./football.json"  # Replace with the actual path to your JSON file
-    vectorstore = load_index(json_file, index_path)
+    index_module = load_index(index_path)
     llm = LLMModule(model_name='mistralai/Mistral-7B-Instruct-v0.1')
     llm.load_model()
     llm.load_pipelines()
     llm_pipeline = llm.pipelines["response"]
     memory_module = ConversationMemoryModule()
 
-    answer = process_query(query, vectorstore, llm_pipeline, memory_module)
+    answer = process_query(query, index_module, llm_pipeline, memory_module)
     print(f"Chatbot: {answer}")
 
 if __name__ == "__main__":
+    import sys
     if len(sys.argv) < 2:
         print("Usage: python query_module.py <index_path> [query]")
         sys.exit(1)
@@ -75,6 +73,3 @@ if __name__ == "__main__":
         main(query, index_path)
     else:
         chatbot(index_path)
-
-
-
