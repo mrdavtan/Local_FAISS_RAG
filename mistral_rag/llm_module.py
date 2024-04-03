@@ -17,6 +17,7 @@ class LLMModule:
         self.model = None
         self.pipelines = {}
 
+
     def load_model(self):
         model_config = transformers.AutoConfig.from_pretrained(self.model_name)
 
@@ -43,9 +44,28 @@ class LLMModule:
             quantization_config=bnb_config,
         )
 
+#    def load_pipelines(self):
+#        self.pipelines["response"] = pipeline(
+#            model=self.model,
+#            tokenizer=self.tokenizer,
+#            task="text-generation",
+#            device=self.device,
+#            return_full_text=True,
+#            max_new_tokens=500,
+#        )
+#
+#        self.pipelines["standalone_query"] = pipeline(
+#            model=self.model,
+#            tokenizer=self.tokenizer,
+#            task="text-generation",
+#            device=self.device,
+#            return_full_text=True,
+#            max_new_tokens=100,
+#        )
+#
     def load_pipelines(self):
         # Initialize the standalone query generation pipeline
-        self.pipelines["standalone_query"] = pipeline(
+        self.pipelines["standalone_question"] = pipeline(
             "text-generation",
             model=self.model,
             tokenizer=self.tokenizer,
