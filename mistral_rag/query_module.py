@@ -15,6 +15,14 @@ def process_query(query, index_module, llm_pipeline, memory_module):
     memory_module.save_memory({"question": query}, {"answer": answer})
     return answer
 
+#def process_query(query, index_module, llm_pipeline, memory_module):
+#    conversation_history = memory_module.get_conversation_history()
+#    standalone_question = generate_standalone_question(query, conversation_history, llm_pipeline)
+#    search_results = index_module.search(query=standalone_question)
+#    answer = generate_answer(search_results, standalone_question, conversation_history, llm_pipeline)
+#    memory_module.save_memory({"question": query}, {"answer": answer})
+#    return answer
+
 
 #def process_query(query, index_module, llm_pipeline, memory_module):
 #        # Assuming standalone_question is correctly extracted here
