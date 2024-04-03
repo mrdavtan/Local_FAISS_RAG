@@ -36,7 +36,9 @@ class IndexModule:
         with open(os.path.join(index_path, "documents.json"), "w") as f:
             json.dump(documents_data, f)
 
+
     def search(self, query, k=4):
+        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ QUERY: ", query)
         query_embedding = self.embeddings_model.encode([query])
         distances, indices = self.faiss_index.search(query_embedding, k)
         return [self.documents[idx] for idx in indices[0]]
@@ -56,7 +58,6 @@ def main(index_path):
     chunked_data_file = os.path.join(index_path, "chunked_text_data.json")
     chunked_documents = load_chunked_data(chunked_data_file)
 
-    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ index_path: ", index_path)
 
     indexing_module = IndexModule()
 

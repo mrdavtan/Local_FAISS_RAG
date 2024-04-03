@@ -5,25 +5,41 @@ from conversation_memory_module import ConversationMemoryModule
 from standalone_question_module import generate_standalone_question
 from answer_generation_module import generate_answer
 
+
+
 def process_query(query, index_module, llm_pipeline, memory_module):
     conversation_history = memory_module.get_conversation_history()
-    print("Conversation History:")
-    print(conversation_history)
-
     standalone_question = generate_standalone_question(query, conversation_history, llm_pipeline)
-    print("Standalone Question:")
-    print(standalone_question)
-
-    search_results = index_module.search(standalone_question)
-    print("Search Results:")
-    print(search_results)
-
+    search_results = index_module.search(query=standalone_question)
     answer = generate_answer(search_results, standalone_question, conversation_history, llm_pipeline)
-    print("Generated Answer:")
-    print(answer)
-
     memory_module.save_memory({"question": query}, {"answer": answer})
     return answer
+
+
+#def process_query(query, index_module, llm_pipeline, memory_module):
+#        # Assuming standalone_question is correctly extracted here
+#    # Now, use this standalone question directly in the search
+#    search_results = index_module.search(standalone_question)
+#
+#
+#    conversation_history = memory_module.get_conversation_history()
+#    #print("Conversation History:")
+#    #print(conversation_history)
+#
+# #   standalone_question = generate_standalone_question(query, conversation_history, llm_pipeline)
+#    #print("Standalone Question:")
+#    #print(standalone_question)
+#
+#    search_results = index_module.search(standalone_question)
+#    #print("Search Results:")
+#    #print(search_results)
+#
+#    answer = generate_answer(search_results, standalone_question, conversation_history, llm_pipeline)
+#    #print("Generated Answer:")
+#    #print(answer)
+#
+#    memory_module.save_memory({"question": query}, {"answer": answer})
+#    return answer
 
 def chatbot(index_path):
     index_module = load_index(index_path)
