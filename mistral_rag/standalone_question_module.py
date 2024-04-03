@@ -1,54 +1,35 @@
-from langchain_core.prompts import PromptTemplate
+from prompt_templates import CONDENSE_QUESTION_PROMPT
 
-
-print("################################ Standalone Question Module #####################################3")
-
-_template = """
-[INST]
-Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language, that can be used to query a FAISS index. This query will be used to retrieve documents with additional context.
-
-Let me share a couple examples that will be important.
-
-If you do not see any chat history, you MUST return the "Follow Up Input" as is:
-
-```
-Chat History:
-
-Follow Up Input: How is Lawrence doing?
-Standalone Question:
-How is Lawrence doing?
-```
-
-If this is the second question onwards, you should properly rephrase the question like this:
-
-```
-Chat History:
-Human: How is Lawrence doing?
-AI:
-Lawrence is injured and out for the season.
-
-Follow Up Input: What was his injurt?
-Standalone Question:
-What was Lawrence's injury?
-```
-
-Now, with those examples, here is the actual chat history and input question.
-
-Chat History:
-{chat_history}
-
-Follow Up Input: {question}
-Standalone question:
-[your response here]
-[/INST]
-"""
-CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(_template)
-
-def generate_standalone_question(question, conversation_history, llm):
+def generate_standalone_question(question, conversation_history, llm_pipeline):
     prompt = CONDENSE_QUESTION_PROMPT.format(question=question, chat_history=conversation_history)
-    print("Standalone Question Prompt:")
-    print(prompt)
-    standalone_question = llm.generate_text(prompt, task="standalone_query").strip()
-    print("Generated Standalone Question:")
-    print(standalone_question)
-    return standalone_question
+    print("######################## QUESTION: ", question)
+
+    standalone_question = llm_pipeline(prompt)
+
+    if isinstance(standalone_question, list):
+        standalone_question = standalone_question[0]['generated_text'].strip()
+    else:
+        standalone_question = standalone_question.strip()
+
+    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%% STANDALONE QUESTION: ", standalone_question)
+
+    # Extract the actual standalone question
+    start_marker = "Standalone question:"
+    end_marker = "[/INST]"
+    start_index = standalone_question.find(start_marker)
+    end_index = standalone_question.find(end_marker)
+
+    if start_index != -1 and end_index != -1:
+        start_index += len(start_marker)
+        standalone_question = standalone_question[start_index:end_index].strip()
+    else:
+        print("Error: Could not extract standalone question from the generated output.")
+        standalone_question = ""
+
+    # Combine the query with the standalone question
+    query = f"{question} {standalone_question}"
+
+    return query
+
+
+

@@ -1,45 +1,30 @@
 print("###################### Conversation Memory Module #######################")
 
-from langchain.memory.buffer import ConversationBufferMemory
-from langchain_core.prompts import PromptTemplate
-
 class ConversationMemoryModule:
     def __init__(self):
-        self.memory = ConversationBufferMemory(
-            return_messages=True, output_key="answer", input_key="question"
-        )
-        self.standalone_question_prompt = PromptTemplate(
-            input_variables=["question", "chat_history"],
-            template="""
-            Given the following conversation and a follow-up question, rephrase the follow-up question to be a standalone question.
-
-            Chat History:
-            {chat_history}
-
-            Follow-up Question: {question}
-
-            Standalone Question:
-            """,
-        )
+        self.memory = []
 
     def load_memory(self, inputs):
         print("##################### Loading Memory #############################")
-        return self.memory.load_memory_variables(inputs)["history"]
+        return self.memory
 
     def save_memory(self, inputs, outputs):
-        self.memory.save_context(inputs, outputs)
+        human_message = {
+            "type": "human",
+            "content": inputs["question"]
+        }
+        ai_message = {
+            "type": "ai",
+            "content": outputs["answer"]
+        }
+        self.memory.append(human_message)
+        self.memory.append(ai_message)
 
-    def generate_standalone_question(self, query, conversation_history, llm):
-        print("################# Generating Standalone Question ################")
-        # Format the prompt with the current query and conversation history
-        formatted_history = "\n".join([f"{msg.type}: {msg.content}" for msg in conversation_history])
-        prompt = self.standalone_question_prompt.format(
-            question=query, chat_history=formatted_history
-        )
-        # Assuming llm is an instance of HuggingFacePipeline or a similar wrapper
-        # and can be invoked directly to generate a response
-        standalone_question = llm(prompt).strip()  # Directly invoke llm with the prompt
-        return standalone_question
+    def clear_memory(self):
+        self.memory = []
 
-
-
+    def get_conversation_history(self):
+        conversation_history = ""
+        for message in self.memory:
+            conversation_history += f"{message['type']}: {message['content']}\n"
+        return conversation_history.strip()

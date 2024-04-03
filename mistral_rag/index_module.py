@@ -1,28 +1,47 @@
 import argparse
 import json
 import os
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain.docstore.document import Document
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
+
+class Document:
+    def __init__(self, page_content, metadata):
+        self.page_content = page_content
+        self.metadata = metadata
 
 class IndexModule:
     def __init__(self, model_name="sentence-transformers/all-mpnet-base-v2"):
-        self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
-        self.vectorstore = None
+        self.embeddings_model = SentenceTransformer(model_name)
+        self.faiss_index = None
+        self.documents = []
 
     def index_documents(self, documents):
-        self.vectorstore = FAISS.from_documents(documents, self.embeddings)
-        return self.vectorstore
+        self.documents = documents
+        embeddings = self.embeddings_model.encode([doc.page_content for doc in documents], show_progress_bar=True)
+        self.faiss_index = faiss.IndexFlatL2(embeddings.shape[1])
+        self.faiss_index.add(embeddings)
+        return self.faiss_index
 
     def load_index(self, index_path):
-        self.vectorstore = FAISS.load_local(index_path, self.embeddings, allow_dangerous_deserialization=True)
-        return self.vectorstore
+        self.faiss_index = faiss.read_index(os.path.join(index_path, "index.faiss"))
+        with open(os.path.join(index_path, "documents.json"), "r") as f:
+            documents_data = json.load(f)
+            self.documents = [Document(page_content=doc["page_content"], metadata=doc["metadata"]) for doc in documents_data]
+        return self.faiss_index
 
     def save_index(self, index_path):
-        self.vectorstore.save_local(index_path)
+        faiss.write_index(self.faiss_index, os.path.join(index_path, "index.faiss"))
+        documents_data = [{"page_content": doc.page_content, "metadata": doc.metadata} for doc in self.documents]
+        with open(os.path.join(index_path, "documents.json"), "w") as f:
+            json.dump(documents_data, f)
+
 
     def search(self, query, k=4):
-        return self.vectorstore.similarity_search(query, k=k)
+        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ QUERY: ", query)
+        query_embedding = self.embeddings_model.encode([query])
+        distances, indices = self.faiss_index.search(query_embedding, k)
+        return [self.documents[idx] for idx in indices[0]]
 
 def load_chunked_data(json_file):
     with open(json_file, 'r') as file:
@@ -35,44 +54,28 @@ def load_chunked_data(json_file):
 
     return documents
 
-def main(json_file, index_path=None):
-    chunked_documents = load_chunked_data(json_file)
+def main(index_path):
+    chunked_data_file = os.path.join(index_path, "chunked_text_data.json")
+    chunked_documents = load_chunked_data(chunked_data_file)
 
-    if not index_path:
-        # Create an index directory using the name of the chunked_data file
-        index_name = os.path.splitext(os.path.basename(json_file))[0]
-        index_path = f"{index_name}_index"
-
-    os.makedirs(index_path, exist_ok=True)
 
     indexing_module = IndexModule()
 
-    index_faiss_path = os.path.join(index_path, f"{index_name}.faiss")
-    index_pkl_path = os.path.join(index_path, f"{index_name}.pkl")
+    faiss_index_path = os.path.join(index_path, "index.faiss")
 
-    if os.path.exists(index_faiss_path) and os.path.exists(index_pkl_path):
-        # Load the index from disk if both index files exist
-        vectorstore = indexing_module.load_index(index_path)
+    if os.path.exists(faiss_index_path):
+        indexing_module.load_index(index_path)
     else:
-        # Index the documents if either index file doesn't exist
-        vectorstore = indexing_module.index_documents(chunked_documents)
+        indexing_module.index_documents(chunked_documents)
         indexing_module.save_index(index_path)
 
-    # Perform a search
-    query = "What is the main topic of the articles?"
-    search_results = indexing_module.search(query)
-
-    print("Search Results:")
-    for result in search_results:
-        print(result.page_content)
+    return indexing_module
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Indexing Module")
-    parser.add_argument("chunked_data_file", type=str, help="Path to the JSON file containing chunked data")
-    parser.add_argument("--index-path", type=str, help="Path to the directory to store the index files (optional)")
+    parser.add_argument("index_path", type=str, help="Path to the directory containing the index files")
     args = parser.parse_args()
 
-    json_file = args.chunked_data_file
     index_path = args.index_path
 
-    main(json_file, index_path)
+    main(index_path)
