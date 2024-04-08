@@ -3,10 +3,8 @@ from prompt_templates import ANSWER_PROMPT, SEARCH_QUALITY_PROMPT, GENERIC_RESPO
 def generate_answer(search_results, standalone_question, conversation_history, llm):
     try:
         # Combine the search result documents into a single context string
-        context = "\n\n".join([doc.page_content for doc in search_results])
 
-        print("Search Results Context:")
-        print(context)
+        context = "\n\n".join([f'["{doc.page_content}"]' for doc in search_results])
 
         # Generate the search quality reflection
         search_quality_prompt = SEARCH_QUALITY_PROMPT.format(
@@ -14,8 +12,6 @@ def generate_answer(search_results, standalone_question, conversation_history, l
             question=standalone_question,
             search_results=context
         )
-        print("Search Quality Prompt:")
-        print(search_quality_prompt)
 
         search_quality_reflection = llm(search_quality_prompt)
 
@@ -26,8 +22,6 @@ def generate_answer(search_results, standalone_question, conversation_history, l
         else:
             search_quality_reflection = str(search_quality_reflection).strip()
 
-        print("Search Quality Reflection:")
-        print(search_quality_reflection)
 
         # Use the answer prompt regardless of search quality reflection
         answer_prompt = ANSWER_PROMPT.format(
@@ -35,10 +29,6 @@ def generate_answer(search_results, standalone_question, conversation_history, l
             question=standalone_question
         )
 
-        print("Selected Answer Prompt:")
-        print(answer_prompt)
-
-        # Generate the answer using the LLM
         answer = llm(answer_prompt)
 
         if isinstance(answer, dict):
@@ -48,10 +38,10 @@ def generate_answer(search_results, standalone_question, conversation_history, l
         else:
             answer = str(answer).strip()
 
-        print("Generated Answer:")
-        print(answer)
+        # Add line break after [/INST], print "Question:", and add "Answer:" before the answer
+        formatted_answer = f"[/INST]\n\nQuestion: {standalone_question}\n\nAnswer: {answer}"
 
-        return answer
+        return formatted_answer
 
     except Exception as e:
         print("Error generating answer:", e)

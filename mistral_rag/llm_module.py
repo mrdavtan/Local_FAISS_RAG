@@ -44,25 +44,6 @@ class LLMModule:
             quantization_config=bnb_config,
         )
 
-#    def load_pipelines(self):
-#        self.pipelines["response"] = pipeline(
-#            model=self.model,
-#            tokenizer=self.tokenizer,
-#            task="text-generation",
-#            device=self.device,
-#            return_full_text=True,
-#            max_new_tokens=500,
-#        )
-#
-#        self.pipelines["standalone_query"] = pipeline(
-#            model=self.model,
-#            tokenizer=self.tokenizer,
-#            task="text-generation",
-#            device=self.device,
-#            return_full_text=True,
-#            max_new_tokens=100,
-#        )
-#
     def load_pipelines(self):
         # Initialize the standalone query generation pipeline
         self.pipelines["standalone_question"] = pipeline(
@@ -90,11 +71,7 @@ class LLMModule:
         try:
             pipeline = self.pipelines.get(task)
             if pipeline:
-                #print("######################### Prompt:")
-                #print(prompt)
                 response = pipeline(prompt)[0]["generated_text"]
-                #print("Response:")
-                #print(response)
                 return response
             else:
                 raise ValueError(f"Invalid task: {task}")

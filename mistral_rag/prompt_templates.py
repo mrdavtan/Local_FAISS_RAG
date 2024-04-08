@@ -1,6 +1,3 @@
-print("###################### Prompt Templates #######################")
-
-
 
 CONDENSE_QUESTION_PROMPT = """
 [INST]

@@ -1,11 +1,8 @@
-print("###################### Conversation Memory Module #######################")
-
 class ConversationMemoryModule:
     def __init__(self):
         self.memory = []
 
     def load_memory(self, inputs):
-        print("##################### Loading Memory #############################")
         return self.memory
 
     def save_memory(self, inputs, outputs):
