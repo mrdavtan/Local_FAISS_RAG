@@ -8,7 +8,7 @@ class ChunkingModule:
         self.output_dir = output_dir
         self.nlp = spacy.load("en_core_web_sm")
 
-    def chunk_articles(self):
+    def chunk_articles(self, chunk_size=3):
         chunked_data = []
         for filename in os.listdir(self.articles_dir):
             if filename.endswith('.json'):
@@ -17,7 +17,16 @@ class ChunkingModule:
                     article = json.load(file)
                     text = article['body']
                     doc = self.nlp(text)
-                    chunks = [sent.text.strip() for sent in doc.sents]
+                    sentences = [sent.text.strip() for sent in doc.sents]
+                    chunks = []
+                    current_chunk = []
+                    for sentence in sentences:
+                        current_chunk.append(sentence)
+                        if len(current_chunk) == chunk_size:
+                            chunks.append(" ".join(current_chunk))
+                            current_chunk = []
+                    if current_chunk:
+                        chunks.append(" ".join(current_chunk))
                     for i, chunk in enumerate(chunks):
                         chunk_id = f"{article['id']}_{i}"
                         chunked_data.append({
@@ -42,7 +51,7 @@ class ChunkingModule:
 
 def main(articles_dir, output_dir):
     chunking_module = ChunkingModule(articles_dir, output_dir)
-    chunked_data = chunking_module.chunk_articles()
+    chunked_data = chunking_module.chunk_articles(chunk_size=5)
     return chunked_data
 
 if __name__ == '__main__':
