@@ -10,7 +10,7 @@ Image Credits: https://medium.com/@madhavthaker/build-your-own-rag-with-mistral-
 
 This is a module I'm using as part of a larger project, using prompts and basic flow from Madhav Thaker's excellent notebook (see link above and below). What is different about this implementation is that I removed langchain to reduce package dependencies and unnecessary abstractions/wrappers. The functionality is broken down into modules, and I built it with automation in mind, to be run in the shell with command line arguments.
 
-Essentially, this is a Retrieval Augmented Generation (RAG) system using the Mistral 7B language model running locally and FAISS (Facebook AI Similarity Search) for local vector indexing. It allows you to index content from a folder with json files, and then engage in a conversational question-answering session based on the indexed informiation.
+Essentially, this is a Retrieval Augmented Generation (RAG) system using the Mistral 7B language model running locally and FAISS (Facebook AI Similarity Search) for local vector indexing. It allows you to index content from a folder with json files, and then engage in a conversational question-answering session based on the indexed information.
 
 ## Description
 
@@ -76,7 +76,7 @@ You can chat with your text files from the terminal (yawn). More interestingly, 
 
 ## Acknowledgements
 
-I used a number of reference articles and wanted to acknowledge Madhav Thaker's excellent tutorial and notebook:
+Please check out Madhav Thaker's excellent tutorial and notebook:
 - [Part 1: Build your own RAG with Mistral-7B and LangChain](https://medium.com/@madhavthaker/build-your-own-rag-with-mistral-7b-and-langchain-eeb57efb4130)
 
 License
