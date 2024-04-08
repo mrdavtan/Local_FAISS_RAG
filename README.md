@@ -1,6 +1,11 @@
 
 # Local FAISS RAG
 
+
+![1 rFuratOik62lu8WclOaOlA](https://github.com/mrdavtan/Local_FAISS_RAG/assets/21132073/f1f66ea3-f18b-4625-98aa-2b182b9b2fd8)
+
+
+
 This is an implementation of a Retrieval Augmented Generation (RAG) system using the Mistral 7B language model and FAISS (Facebook AI Similarity Search) for local vector indexing without the use of langchain. It allows you to index content from a folder with json files, and then engage in a conversational question-answering session based on the indexed informiation.
 
 I looked at a number of langchain RAG implementations and ended up removing langchain to reduce dependencies and abstractions. This also improved the reliability of the prompt responses.
@@ -65,7 +70,7 @@ The project consists of several key components:
 
 ## Acknowledgements
 
-I used a number of reference articles and wanted to acknowledge Madhav Thaker's article for the tutorial:
+I used a number of reference articles and wanted to acknowledge Madhav Thaker's excellent tutorial and notebook:
 - [Part 1: Build your own RAG with Mistral-7B and LangChain](https://medium.com/@madhavthaker/build-your-own-rag-with-mistral-7b-and-langchain-eeb57efb4130)
 
 License
