@@ -3,8 +3,7 @@ from prompt_templates import ANSWER_PROMPT, SEARCH_QUALITY_PROMPT, GENERIC_RESPO
 def generate_answer(search_results, standalone_question, conversation_history, llm):
     try:
         # Combine the search result documents into a single context string
-
-        context = "\n\n".join([f'["{doc.page_content}"]' for doc in search_results])
+        context = "\n\n".join([doc.page_content for doc in search_results])
 
         # Generate the search quality reflection
         search_quality_prompt = SEARCH_QUALITY_PROMPT.format(
@@ -39,7 +38,7 @@ def generate_answer(search_results, standalone_question, conversation_history, l
             answer = str(answer).strip()
 
         # Add line break after [/INST], print "Question:", and add "Answer:" before the answer
-        formatted_answer = f"[/INST]\n\nQuestion: {standalone_question}\n\nAnswer: {answer}"
+        formatted_answer = f"[/INST]\n\n{standalone_question}\n{answer}"
 
         return formatted_answer
 

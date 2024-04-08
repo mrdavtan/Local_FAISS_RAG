@@ -37,7 +37,7 @@ class IndexModule:
             json.dump(documents_data, f)
 
 
-    def search(self, query, k=4):
+    def search(self, query, k=20):
         query_embedding = self.embeddings_model.encode([query])
         distances, indices = self.faiss_index.search(query_embedding, k)
         return [self.documents[idx] for idx in indices[0]]

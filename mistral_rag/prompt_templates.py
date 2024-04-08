@@ -44,9 +44,11 @@ ANSWER_PROMPT = """
 [INST]
 Answer the question based only on the following context:
 {context}
+[/INST]
 
 Question: {question}
-[/INST]
+
+Answer:
 """
 
 SEARCH_QUALITY_PROMPT = """
