@@ -6,9 +6,11 @@
 
 Image Credits: https://medium.com/@madhavthaker/build-your-own-rag-with-mistral-7b-and-langchain-eeb57efb4130
 
-This is part of a larger multi-agent workflow project, using methods and prompts from Madhav Thaker's excellent jupyter notebook. It's basically an implementation of a Retrieval Augmented Generation (RAG) system using the Mistral 7B language model running locally and FAISS (Facebook AI Similarity Search) for local vector indexing without the use of langchain. It allows you to index content from a folder with json files, and then engage in a conversational question-answering session based on the indexed informiation.
+## Notes
 
-You can use this with automation and command line arguments. The functionality is separated into modules for easier reuse and adaptation, and (other than llamaindex for one library), it doesn't use frameworks to reduce package dependencies and abstractions. This helps to better understand what is happening.
+This is a module I'm using as part of a larger project, using prompts and basic flow from Madhav Thaker's excellent notebook (see link above and below). What is different about this implementation is that I removed langchain to reduce package dependencies and unnecessary abstractions/wrappers. The functionality is broken down into modules, and I built it with automation in mind, to be run in the shell with command line arguments.
+
+Essentially, this is a Retrieval Augmented Generation (RAG) system using the Mistral 7B language model running locally and FAISS (Facebook AI Similarity Search) for local vector indexing. It allows you to index content from a folder with json files, and then engage in a conversational question-answering session based on the indexed informiation.
 
 ## Description
 
