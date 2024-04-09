@@ -8,9 +8,9 @@ Image Credits: https://medium.com/@madhavthaker/build-your-own-rag-with-mistral-
 
 ## Notes
 
-This is a module I'm using as part of a larger project, using prompts and basic flow from Madhav Thaker's excellent notebook (see link above and below). What is different about this implementation is that I removed langchain to reduce package dependencies and unnecessary abstractions/wrappers. The functionality is broken down into modules, and I built it with automation in mind, to be run in the shell with command line arguments.
+This is a tool derived from Madhav Thaker's well laid out notebook (referenced above and below). In this adaptation, I have eliminated the use of langchain to streamline package dependencies and minimize the use of unnecessary abstractions or wrappers. The system architecture is modularized, designed with an emphasis on automation, allowing for execution via shell commands with command-line parameters.
 
-Essentially, this is a Retrieval Augmented Generation (RAG) system using the Mistral 7B language model running locally and FAISS (Facebook AI Similarity Search) for local vector indexing. It allows you to index content from a folder with json files, and then engage in a conversational question-answering session based on the indexed information.
+The system is a Retrieval Augmented Generation (RAG) framework, leveraging the Mistral 7B language model for local operation alongside FAISS (Facebook AI Similarity Search) for indexing vectors locally. This setup enables the indexing of content from JSON files within a folder, facilitating a conversational question-answering interface based on the stored information.
 
 ## Description
 
@@ -18,10 +18,6 @@ This tool consists of 3 basic functions and interactions:
 - Content Chunking: The folder of json text files are chunked before indexing and retrieval.
 - Indexing: The chunked content is indexed using FAISS, allowing for fast similarity search based on the input queries.
 - Question-Answering: The system engages in a conversational question-answering session, leveraging the indexed content to generate relevant responses.
-
-## What Can I Use This For?
-
-You can chat with your text files from the terminal (yawn). More interestingly, you could use this as a building block for your own chains and reflection schemes.
 
 ## Usage
 
